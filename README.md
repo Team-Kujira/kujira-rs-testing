@@ -1,5 +1,12 @@
 Mock test interfaces for [kujira-rs](https://github.com/Team-Kujira/kujira-rs)
 
+Add to dev-dependecies
+
+```toml
+[dev-dependencies]
+kujira-rs-testing = { git = "https://github.com/team-kujira/kujira-rs-testing" }
+```
+
 # mock.rs
 
 This creates a mock interface to the chain core, supporting Oracle queries and Denom msgs and queries.
