@@ -35,7 +35,7 @@ pub fn execute(
     let sender = info.sender.clone();
     match msg {
         ExecuteMsg::ExecuteLiquidation { exchange_rate, .. } => {
-            let collateral_amount = amount(&COLLATERAL.to_string(), info.funds)?;
+            let collateral_amount = amount(&COLLATERAL.into(), info.funds)?;
 
             let net_premium = Decimal::from_ratio(95u128, 100u128);
             let repay_amount = collateral_amount * exchange_rate * net_premium;

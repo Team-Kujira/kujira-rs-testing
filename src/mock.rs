@@ -1,6 +1,6 @@
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{
-    attr, coin,
+    attr,
     testing::{MockApi, MockStorage},
     to_binary, Addr, Coin, Decimal, Empty, Event,
 };
@@ -74,6 +74,7 @@ impl Module for KujiraModule {
         QueryC: cosmwasm_std::CustomQuery + serde::de::DeserializeOwned + 'static,
     {
         match msg {
+            KujiraMsg::Auth(_) => todo!(),
             KujiraMsg::Denom(d) => match d {
                 DenomMsg::Create { .. } => Ok(AppResponse {
                     events: vec![],
@@ -86,14 +87,16 @@ impl Module for KujiraModule {
                 } => Ok(AppResponse {
                     events: vec![Event::new("mint").add_attributes(vec![
                         attr("amount", amount),
-                        attr("denom", denom),
+                        attr("denom", denom.to_string()),
                         attr("recipient", recipient),
                     ])],
                     data: None,
                 }),
                 DenomMsg::Burn { denom, amount } => Ok(AppResponse {
-                    events: vec![Event::new("burn")
-                        .add_attributes(vec![attr("amount", amount), attr("denom", denom)])],
+                    events: vec![Event::new("burn").add_attributes(vec![
+                        attr("amount", amount),
+                        attr("denom", denom.to_string()),
+                    ])],
                     data: None,
                 }),
                 _ => todo!(),
@@ -132,7 +135,7 @@ impl Module for KujiraModule {
         match request {
             KujiraQuery::Bank(b) => match b {
                 BankQuery::Supply { denom } => Ok(to_binary(&SupplyResponse {
-                    amount: coin(0u128, denom),
+                    amount: denom.coin(&0u128),
                 })?),
             },
             KujiraQuery::Oracle(o) => match o {

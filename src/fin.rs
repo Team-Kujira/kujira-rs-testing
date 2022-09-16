@@ -37,7 +37,7 @@ pub fn execute(
     let sender = info.sender.clone();
     match msg {
         ExecuteMsg::Swap { belief_price, .. } => {
-            let amount: Uint256 = amount(&STABLE.to_string(), info.funds)?.into();
+            let amount: Uint256 = amount(&STABLE.into(), info.funds)?.into();
             let price = belief_price.unwrap_or_else(|| Decimal256::from_ratio(100u128, 1425u128));
             let return_amount: Uint128 = Uint128::try_from(amount * price)?;
 
