@@ -2,7 +2,7 @@ use anyhow::Result as AnyResult;
 use cosmwasm_std::{
     attr,
     testing::{MockApi, MockStorage},
-    to_binary, Addr, Coin, Decimal, Empty, Event,
+    to_binary, Addr, Coin, Decimal, Empty, Event, Uint128,
 };
 
 use cw_multi_test::{
@@ -28,6 +28,7 @@ pub type CustomApp = App<
 pub fn mock_app(balances: Vec<(Addr, Vec<Coin>)>) -> CustomApp {
     let custom = KujiraModule {
         oracle_price: Decimal::from_ratio(1425u128, 100u128),
+        supply: Uint128::zero(),
     };
     BasicAppBuilder::new_custom()
         .with_custom(custom)
@@ -40,11 +41,16 @@ pub fn mock_app(balances: Vec<(Addr, Vec<Coin>)>) -> CustomApp {
 
 pub struct KujiraModule {
     pub oracle_price: Decimal,
+    pub supply: Uint128,
 }
 
 impl KujiraModule {
     pub fn set_oracle_price(&mut self, price: Decimal) {
         self.oracle_price = price;
+    }
+
+    pub fn set_supply(&mut self, supply: Uint128) {
+        self.supply = supply;
     }
 }
 
@@ -135,7 +141,7 @@ impl Module for KujiraModule {
         match request {
             KujiraQuery::Bank(b) => match b {
                 BankQuery::Supply { denom } => Ok(to_binary(&SupplyResponse {
-                    amount: denom.coin(&0u128),
+                    amount: denom.coin(&self.supply),
                 })?),
             },
             KujiraQuery::Oracle(o) => match o {
