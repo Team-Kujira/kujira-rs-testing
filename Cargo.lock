@@ -21,6 +21,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "904dfeac50f3cdaba28fc6f57fdcddb75f49ed61346676a78c4ffe55877802fd"
 
 [[package]]
+name = "base64"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0ea22880d78093b0cbe17c89f64a7d457941e65759157ec6cb31a31d652b05e5"
+
+[[package]]
 name = "base64ct"
 version = "1.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -87,7 +93,7 @@ version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "875994993c2082a6fcd406937bf0fca21c349e4a624f3810253a14fa83a3a195"
 dependencies = [
- "base64",
+ "base64 0.13.0",
  "cosmwasm-crypto",
  "cosmwasm-derive",
  "forward_ref",
@@ -405,9 +411,9 @@ dependencies = [
 
 [[package]]
 name = "kujira"
-version = "0.7.16"
+version = "0.7.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5fe08806028a75b6a05fe2852a19999fff2b54a789a18ab8130d49a11c4d6d89"
+checksum = "5f6315f4822632d57d5f08f8e4fd367b5a96ef28fd08a6fbcd2b6bdb537674f3"
 dependencies = [
  "anyhow",
  "cosmwasm-std",
@@ -423,11 +429,14 @@ name = "kujira-rs-testing"
 version = "1.0.1"
 dependencies = [
  "anyhow",
+ "base64 0.20.0",
  "cosmwasm-std",
  "cw-multi-test",
+ "hex",
  "kujira",
  "schemars",
  "serde",
+ "serde_json",
 ]
 
 [[package]]
