@@ -98,7 +98,7 @@ impl Module for KujiraModule {
                         .unwrap_or_default();
 
                     supply += amount;
-                    storage.set(denom.as_bytes(), &Uint128::from(supply).to_be_bytes());
+                    storage.set(denom.as_bytes(), &supply.to_be_bytes());
                     router.sudo(
                         api,
                         storage,
@@ -125,7 +125,7 @@ impl Module for KujiraModule {
                         .unwrap_or_default();
 
                     supply -= amount;
-                    storage.set(denom.as_bytes(), &Uint128::from(supply).to_be_bytes());
+                    storage.set(denom.as_bytes(), &supply.to_be_bytes());
 
                     router.execute(
                         api,
