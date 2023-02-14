@@ -470,9 +470,9 @@ dependencies = [
 
 [[package]]
 name = "kujira"
-version = "0.7.21"
+version = "0.7.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8fd793b7c0268305a7c5b94f271c8fdc874a0957bd4bd2394a876a520a5e807a"
+checksum = "c292237a000863cc66fc67ac6a28827a2e2a35e32d3e273abdf707572ab6ff99"
 dependencies = [
  "anyhow",
  "cosmwasm-std",
