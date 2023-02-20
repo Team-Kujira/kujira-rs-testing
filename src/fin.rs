@@ -5,7 +5,7 @@ use cosmwasm_std::entry_point;
 
 use cosmwasm_std::{
     coins, to_binary, Addr, BankMsg, Binary, CosmosMsg, Decimal256, Deps, DepsMut, Env, Fraction,
-    MessageInfo, Response, StdError, StdResult, Uint128, Uint256,
+    MessageInfo, Response, StdError, StdResult, Uint128, Uint256, WasmMsg,
 };
 use cw20::Denom;
 use cw_storage_plus::{Item, Map};
@@ -107,7 +107,10 @@ pub fn execute(
 
             Ok(Response::default().add_attribute("order_idx", idx))
         }
-        MockExecuteMsg::FIN(ExecuteMsg::WithdrawOrders { order_idxs }) => {
+        MockExecuteMsg::FIN(ExecuteMsg::WithdrawOrders {
+            order_idxs,
+            callback,
+        }) => {
             let mut messages = vec![];
             for idx in order_idxs.unwrap_or_default() {
                 let mut order = ORDERS.load(deps.storage, idx.u128())?;
@@ -123,17 +126,28 @@ pub fn execute(
                     _ => return Err(StdError::generic_err("Invalid Denom")),
                 };
                 let coin = coins(order.filled.u128(), return_denom);
-                
+
                 order.filled = Uint128::zero();
                 ORDERS.save(deps.storage, idx.u128(), &order)?;
-                messages.push(CosmosMsg::Bank(BankMsg::Send {
-                    to_address: sender.to_string(),
-                    amount: coin,
-                }));
+                match callback.clone() {
+                    Some(cb) => messages.push(CosmosMsg::Wasm(WasmMsg::Execute {
+                        contract_addr: sender.to_string(),
+                        funds: coin,
+                        msg: cb,
+                    })),
+                    None => messages.push(CosmosMsg::Bank(BankMsg::Send {
+                        to_address: sender.to_string(),
+                        amount: coin,
+                    })),
+                }
             }
             Ok(Response::default().add_messages(messages))
         }
-        MockExecuteMsg::FIN(ExecuteMsg::RetractOrder { order_idx, amount }) => {
+        MockExecuteMsg::FIN(ExecuteMsg::RetractOrder {
+            order_idx,
+            amount,
+            callback,
+        }) => {
             let mut order = ORDERS.load(deps.storage, order_idx.u128())?;
             if order.owner != sender {
                 return Err(StdError::generic_err("Not your order"));
@@ -148,12 +162,20 @@ pub fn execute(
             if amount.is_zero() {
                 return Ok(Response::default());
             }
-            Ok(
-                Response::default().add_messages(vec![CosmosMsg::Bank(BankMsg::Send {
+
+            let message = match callback {
+                Some(cb) => CosmosMsg::Wasm(WasmMsg::Execute {
+                    contract_addr: sender.to_string(),
+                    funds: coin,
+                    msg: cb,
+                }),
+                None => CosmosMsg::Bank(BankMsg::Send {
                     to_address: sender.to_string(),
                     amount: coin,
-                })]),
-            )
+                }),
+            };
+
+            Ok(Response::default().add_message(message))
         }
         MockExecuteMsg::Mock(MockMsg::PartialFill { idx, amount }) => {
             let mut order = ORDERS.load(deps.storage, idx.u128())?;
