@@ -11,8 +11,8 @@ use cw20::Denom;
 use cw_storage_plus::{Item, Map};
 use kujira::{
     fin::{ExecuteMsg, InstantiateMsg, OrderResponse, QueryMsg},
-    msg::KujiraMsg,
-    query::KujiraQuery,
+    KujiraMsg,
+    KujiraQuery,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};

@@ -13,8 +13,7 @@ use cw_multi_test::{
 };
 
 use kujira::{
-    msg::{DenomMsg, KujiraMsg},
-    query::{BankQuery, ExchangeRateResponse, KujiraQuery, OracleQuery, SupplyResponse},
+    BankQuery, DenomMsg, ExchangeRateResponse, KujiraMsg, KujiraQuery, OracleQuery, SupplyResponse,
 };
 
 pub type CustomApp = App<
