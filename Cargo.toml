@@ -15,7 +15,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 cosmwasm-std = { version = "1.0.0" }
 schemars = "0.8.10"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
-cw-multi-test = "0.14.0"
+cw-multi-test = "0.16"
 cw-storage-plus = "0.13.2"
 anyhow = "1"
 kujira = { git = "https://github.com/Team-Kujira/kujira-rs", branch = "next" }

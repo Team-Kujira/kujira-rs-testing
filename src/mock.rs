@@ -8,8 +8,8 @@ use cosmwasm_std::{
 };
 
 use cw_multi_test::{
-    App, AppResponse, BankKeeper, BankSudo, BasicAppBuilder, CosmosRouter, FailingDistribution,
-    FailingStaking, Module, SudoMsg, WasmKeeper,
+    App, AppResponse, BankKeeper, BankSudo, BasicAppBuilder, CosmosRouter, DistributionKeeper,
+    StakeKeeper, Module, SudoMsg, WasmKeeper,
 };
 
 use kujira::{
@@ -22,8 +22,8 @@ pub type CustomApp = App<
     MockStorage,
     KujiraModule,
     WasmKeeper<KujiraMsg, KujiraQuery>,
-    FailingStaking,
-    FailingDistribution,
+    StakeKeeper,
+    DistributionKeeper,
 >;
 
 pub fn mock_app(balances: Vec<(Addr, Vec<Coin>)>) -> CustomApp {
