@@ -65,7 +65,7 @@ pub fn execute(
                 Some(cb) => msgs.push(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: sender.to_string(),
                     funds: coins(repay_amount.u128(), STABLE.to_string()),
-                    msg: cb,
+                    msg: cb.0,
                 })),
             }
 
