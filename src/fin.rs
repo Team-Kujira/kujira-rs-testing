@@ -11,8 +11,7 @@ use cw20::Denom;
 use cw_storage_plus::{Item, Map};
 use kujira::{
     fin::{ExecuteMsg, InstantiateMsg, OrderResponse, QueryMsg},
-    msg::KujiraMsg,
-    query::KujiraQuery,
+    KujiraMsg, KujiraQuery,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -133,7 +132,7 @@ pub fn execute(
                     Some(cb) => messages.push(CosmosMsg::Wasm(WasmMsg::Execute {
                         contract_addr: sender.to_string(),
                         funds: coin,
-                        msg: cb,
+                        msg: cb.0,
                     })),
                     None => messages.push(CosmosMsg::Bank(BankMsg::Send {
                         to_address: sender.to_string(),
@@ -167,7 +166,7 @@ pub fn execute(
                 Some(cb) => CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: sender.to_string(),
                     funds: coin,
-                    msg: cb,
+                    msg: cb.0,
                 }),
                 None => CosmosMsg::Bank(BankMsg::Send {
                     to_address: sender.to_string(),

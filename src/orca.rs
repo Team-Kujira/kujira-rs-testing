@@ -7,10 +7,9 @@ use cosmwasm_std::{
 };
 use cw_storage_plus::Item;
 use kujira::{
-    msg::KujiraMsg,
+    amount, fee_address,
     orca::{ExecuteMsg, InstantiateMsg, QueryMsg, SimulationResponse},
-    query::KujiraQuery,
-    utils::{amount, fee_address},
+    KujiraMsg, KujiraQuery,
 };
 
 const STABLE: &str = "factory/contract0/uusk";
@@ -38,7 +37,11 @@ pub fn execute(
 ) -> StdResult<Response<KujiraMsg>> {
     let sender = info.sender.clone();
     match msg {
-        ExecuteMsg::ExecuteLiquidation { exchange_rate, callback, .. } => {
+        ExecuteMsg::ExecuteLiquidation {
+            exchange_rate,
+            callback,
+            ..
+        } => {
             let collateral_amount = amount(&COLLATERAL.into(), info.funds)?;
 
             let net_premium = Decimal::from_ratio(95u128, 100u128);
@@ -62,7 +65,7 @@ pub fn execute(
                 Some(cb) => msgs.push(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: sender.to_string(),
                     funds: coins(fee_amount.u128(), STABLE.to_string()),
-                    msg: cb,
+                    msg: cb.0,
                 })),
             }
 

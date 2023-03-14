@@ -8,24 +8,16 @@ use cosmwasm_std::{
 };
 
 use cw_multi_test::{
-    App, AppResponse, BankKeeper, BankSudo, BasicAppBuilder, CosmosRouter, FailingDistribution,
-    FailingStaking, Module, SudoMsg, WasmKeeper,
+    App, AppResponse, BankKeeper, BankSudo, BasicAppBuilder, CosmosRouter, Module, SudoMsg,
+    WasmKeeper,
 };
 
 use kujira::{
-    msg::{DenomMsg, KujiraMsg},
-    query::{BankQuery, ExchangeRateResponse, KujiraQuery, OracleQuery, SupplyResponse},
+    BankQuery, DenomMsg, ExchangeRateResponse, KujiraMsg, KujiraQuery, OracleQuery, SupplyResponse,
 };
 
-pub type CustomApp = App<
-    BankKeeper,
-    MockApi,
-    MockStorage,
-    KujiraModule,
-    WasmKeeper<KujiraMsg, KujiraQuery>,
-    FailingStaking,
-    FailingDistribution,
->;
+pub type CustomApp =
+    App<BankKeeper, MockApi, MockStorage, KujiraModule, WasmKeeper<KujiraMsg, KujiraQuery>>;
 
 pub fn mock_app(balances: Vec<(Addr, Vec<Coin>)>) -> CustomApp {
     let custom = KujiraModule {
