@@ -485,6 +485,7 @@ dependencies = [
 [[package]]
 name = "kujira"
 version = "0.8.0"
+source = "git+https://github.com/Team-Kujira/kujira-rs?rev=ebcb0e684f11a33fedd0742035042523dbf39d6d#ebcb0e684f11a33fedd0742035042523dbf39d6d"
 dependencies = [
  "kujira-fin",
  "kujira-ghost",
@@ -496,6 +497,7 @@ dependencies = [
 [[package]]
 name = "kujira-fin"
 version = "0.8.0"
+source = "git+https://github.com/Team-Kujira/kujira-rs?rev=ebcb0e684f11a33fedd0742035042523dbf39d6d#ebcb0e684f11a33fedd0742035042523dbf39d6d"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -506,6 +508,7 @@ dependencies = [
 [[package]]
 name = "kujira-ghost"
 version = "0.8.0"
+source = "git+https://github.com/Team-Kujira/kujira-rs?rev=ebcb0e684f11a33fedd0742035042523dbf39d6d#ebcb0e684f11a33fedd0742035042523dbf39d6d"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -515,6 +518,7 @@ dependencies = [
 [[package]]
 name = "kujira-orca"
 version = "0.8.0"
+source = "git+https://github.com/Team-Kujira/kujira-rs?rev=ebcb0e684f11a33fedd0742035042523dbf39d6d#ebcb0e684f11a33fedd0742035042523dbf39d6d"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -541,17 +545,18 @@ dependencies = [
 [[package]]
 name = "kujira-stable"
 version = "0.8.0"
+source = "git+https://github.com/Team-Kujira/kujira-rs?rev=ebcb0e684f11a33fedd0742035042523dbf39d6d#ebcb0e684f11a33fedd0742035042523dbf39d6d"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "kujira-fin",
- "kujira-orca",
  "kujira-std",
 ]
 
 [[package]]
 name = "kujira-std"
 version = "0.8.0"
+source = "git+https://github.com/Team-Kujira/kujira-rs?rev=ebcb0e684f11a33fedd0742035042523dbf39d6d#ebcb0e684f11a33fedd0742035042523dbf39d6d"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
