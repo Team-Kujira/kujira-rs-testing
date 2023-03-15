@@ -4,14 +4,14 @@ use std::convert::TryFrom;
 use cosmwasm_std::entry_point;
 
 use cosmwasm_std::{
-    coins, to_binary, Addr, BankMsg, Binary, CosmosMsg, Decimal256, Deps, DepsMut, Env, Fraction,
-    MessageInfo, Response, StdError, StdResult, Uint128, Uint256, WasmMsg,
+    coins, from_binary, to_binary, Addr, BankMsg, Binary, CosmosMsg, Decimal256, Deps, DepsMut,
+    Env, Fraction, MessageInfo, Response, StdError, StdResult, Uint128, Uint256, WasmMsg,
 };
 use cw20::Denom;
 use cw_storage_plus::{Item, Map};
 use kujira::{
-    fin::{ExecuteMsg, InstantiateMsg, OrderResponse, QueryMsg},
-    KujiraMsg, KujiraQuery,
+    fin::{ExecuteMsg, InstantiateMsg, NewOrderCallback, OrderResponse, QueryMsg},
+    Callback, KujiraMsg, KujiraQuery,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -116,13 +116,23 @@ pub fn execute(
             ORDERS.save(deps.storage, idx.u128(), &order)?;
 
             match callback {
-                Some(cb) => Ok(Response::default()
-                    .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-                        contract_addr: sender.to_string(),
-                        funds: vec![],
-                        msg: cb.0,
-                    }))
-                    .add_attribute("order_idx", idx)),
+                Some(cb) => {
+                    let as_new_order_cb = from_binary::<NewOrderCallback>(&cb.0);
+                    let cb = match as_new_order_cb {
+                        Ok(mut cb) => {
+                            cb.idx = idx;
+                            Callback(to_binary(&cb)?)
+                        }
+                        Err(_) => cb,
+                    };
+                    Ok(Response::default()
+                        .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
+                            contract_addr: sender.to_string(),
+                            funds: vec![],
+                            msg: cb.0,
+                        }))
+                        .add_attribute("order_idx", idx))
+                }
                 None => Ok(Response::default().add_attribute("order_idx", idx)),
             }
         }
