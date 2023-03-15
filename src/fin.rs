@@ -10,7 +10,10 @@ use cosmwasm_std::{
 use cw20::Denom;
 use cw_storage_plus::{Item, Map};
 use kujira::{
-    fin::{ExecuteMsg, InstantiateMsg, NewOrderCallback, OrderResponse, QueryMsg},
+    fin::{
+        ExecuteMsg, FINCallbackExecuteMsg, InstantiateMsg, NewOrderCallback, OrderResponse,
+        QueryMsg,
+    },
     Callback, KujiraMsg, KujiraQuery,
 };
 use schemars::JsonSchema;
@@ -121,7 +124,7 @@ pub fn execute(
                     let cb = match as_new_order_cb {
                         Ok(mut cb) => {
                             cb.idx = idx;
-                            Callback(to_binary(&cb)?)
+                            Callback(to_binary(&FINCallbackExecuteMsg::OnSubmittedOrder(cb))?)
                         }
                         Err(_) => cb,
                     };
