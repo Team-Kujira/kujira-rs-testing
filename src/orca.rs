@@ -30,7 +30,7 @@ pub fn instantiate(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
-    _deps: DepsMut<KujiraQuery>,
+    deps: DepsMut<KujiraQuery>,
     _env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
@@ -46,7 +46,7 @@ pub fn execute(
 
             let net_premium = Decimal::from_ratio(95u128, 100u128);
             let repay_amount = collateral_amount * exchange_rate * net_premium;
-            let fee_amount = repay_amount * Decimal::from_ratio(1u128, 100u128);
+            let fee_amount = repay_amount * LIQUIDATION_FEE.load(deps.storage)?;
             let repay_amount = repay_amount - fee_amount;
 
             let mut msgs = vec![];
@@ -107,13 +107,10 @@ pub fn query(deps: Deps<KujiraQuery>, _env: Env, msg: QueryMsg) -> StdResult<Bin
             exchange_rate,
             ..
         } => {
-            // Add the 1% fee
-            let fee_amount = repay_amount * LIQUIDATION_FEE.load(deps.storage)?
-                // Add 1 to compensate for decimal truncation Simulate. 
-                // We want to ensure there's always enough collateral for the repay required
-                + Uint128::from(1u128);
-
-            let repay_amount = repay_amount + fee_amount;
+            let repay_amount = Decimal::from_ratio(
+                LIQUIDATION_FEE.load(deps.storage)?.denominator(),
+                Decimal::one().numerator() - LIQUIDATION_FEE.load(deps.storage)?.numerator(),
+            ) * repay_amount;
 
             let collateral_value =
                 repay_amount * Decimal::from_ratio(100u128, 95u128) + Uint128::from(1u128);

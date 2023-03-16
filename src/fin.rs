@@ -100,7 +100,9 @@ pub fn execute(
                 }),
             };
 
-            Ok(Response::default().add_message(message))
+            Ok(Response::default()
+                .add_message(message)
+                .add_attribute("action", "fin-swap"))
         }
         MockExecuteMsg::FIN(ExecuteMsg::SubmitOrder { price, callback }) => {
             let idx = CUR_ORDER_IDX.load(deps.storage)?;
@@ -136,7 +138,9 @@ pub fn execute(
                         }))
                         .add_attribute("order_idx", idx))
                 }
-                None => Ok(Response::default().add_attribute("order_idx", idx)),
+                None => Ok(Response::default()
+                    .add_attribute("order_idx", idx)
+                    .add_attribute("action", "fin-submit-order")),
             }
         }
         MockExecuteMsg::FIN(ExecuteMsg::WithdrawOrders {
@@ -173,7 +177,9 @@ pub fn execute(
                     })),
                 }
             }
-            Ok(Response::default().add_messages(messages))
+            Ok(Response::default()
+                .add_messages(messages)
+                .add_attribute("action", "fin-withdraw"))
         }
         MockExecuteMsg::FIN(ExecuteMsg::RetractOrder {
             order_idx,
@@ -188,26 +194,32 @@ pub fn execute(
                 .map(|a| Uint128::try_from(a).unwrap())
                 .unwrap_or(order.amount);
             let return_denom = order.denom.clone();
-            let coin = coins(amount.u128(), return_denom);
+            let mut coin = coins(amount.u128(), return_denom);
             order.amount = order.amount.checked_sub(amount)?;
             ORDERS.save(deps.storage, order_idx.u128(), &order)?;
             if amount.is_zero() {
-                return Ok(Response::default());
+                coin = vec![];
             }
-
-            let message = match callback {
-                Some(cb) => CosmosMsg::Wasm(WasmMsg::Execute {
+            let mut messages = vec![];
+            match callback {
+                Some(cb) => messages.push(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: sender.to_string(),
                     funds: coin,
                     msg: cb.0,
-                }),
-                None => CosmosMsg::Bank(BankMsg::Send {
-                    to_address: sender.to_string(),
-                    amount: coin,
-                }),
+                })),
+                None => {
+                    if !coin.is_empty() {
+                        messages.push(CosmosMsg::Bank(BankMsg::Send {
+                            to_address: sender.to_string(),
+                            amount: coin,
+                        }))
+                    }
+                }
             };
 
-            Ok(Response::default().add_message(message))
+            Ok(Response::default()
+                .add_messages(messages)
+                .add_attribute("action", "fin-retract"))
         }
         MockExecuteMsg::Mock(MockMsg::PartialFill { idx, amount }) => {
             let mut order = ORDERS.load(deps.storage, idx.u128())?;
@@ -223,7 +235,7 @@ pub fn execute(
             order.filled += return_amount;
             ORDERS.save(deps.storage, idx.u128(), &order)?;
 
-            Ok(Response::default())
+            Ok(Response::default().add_attribute("action", "mock-fill"))
         }
         MockExecuteMsg::Mock(MockMsg::Fill { idx }) => {
             let order = ORDERS.load(deps.storage, idx.u128())?;
@@ -238,7 +250,7 @@ pub fn execute(
                 }),
             )
         }
-        _ => Ok(Response::default()),
+        _ => Ok(Response::default().add_attribute("action", "fin-UNKNOWN-MSG")),
     }
 }
 
