@@ -9,13 +9,13 @@ use cw_storage_plus::Item;
 use kujira::{
     amount, fee_address,
     orca::{ExecuteMsg, InstantiateMsg, QueryMsg, SimulationResponse},
-    KujiraMsg, KujiraQuery,
+    KujiraMsg, KujiraQuery, Denom,
 };
 
-const STABLE: &str = "factory/contract0/uusk";
 const COLLATERAL: &str = "factory/owner/coll";
 
 const LIQUIDATION_FEE: Item<Decimal> = Item::new("liquidation_fee");
+const REPAY_DENOM: Item<Denom> = Item::new("repay_denom");
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -25,6 +25,7 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> StdResult<Response<KujiraMsg>> {
     LIQUIDATION_FEE.save(deps.storage, &msg.liquidation_fee)?;
+    REPAY_DENOM.save(deps.storage, &msg.bid_denom)?;
     Ok(Response::default())
 }
 
@@ -48,23 +49,24 @@ pub fn execute(
             let repay_amount = collateral_amount * exchange_rate * net_premium;
             let fee_amount = repay_amount * LIQUIDATION_FEE.load(deps.storage)?;
             let repay_amount = repay_amount - fee_amount;
+            let repay_denom = REPAY_DENOM.load(deps.storage)?;
 
             let mut msgs = vec![];
             if fee_amount.gt(&Uint128::zero()) {
                 msgs.push(CosmosMsg::Bank(BankMsg::Send {
                     to_address: fee_address().to_string(),
-                    amount: coins(fee_amount.u128(), STABLE.to_string()),
+                    amount: coins(fee_amount.u128(), repay_denom.to_string()),
                 }));
             }
 
             match callback {
                 None => msgs.push(CosmosMsg::Bank(BankMsg::Send {
                     to_address: sender.to_string(),
-                    amount: coins(repay_amount.u128(), STABLE.to_string()),
+                    amount: coins(repay_amount.u128(), repay_denom.to_string()),
                 })),
                 Some(cb) => msgs.push(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: sender.to_string(),
-                    funds: coins(repay_amount.u128(), STABLE.to_string()),
+                    funds: coins(repay_amount.u128(), repay_denom.to_string()),
                     msg: cb.0,
                 })),
             }
