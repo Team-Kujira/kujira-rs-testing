@@ -9,7 +9,7 @@ use cw_storage_plus::Item;
 use kujira::{
     amount, fee_address,
     orca::{ExecuteMsg, InstantiateMsg, QueryMsg, SimulationResponse},
-    KujiraMsg, KujiraQuery, Denom,
+    Denom, KujiraMsg, KujiraQuery,
 };
 
 const COLLATERAL: &str = "factory/owner/coll";
@@ -138,66 +138,75 @@ pub fn query(deps: Deps<KujiraQuery>, _env: Env, msg: QueryMsg) -> StdResult<Bin
             exchange_rate,
             ..
         } => {
+            let current_ltv = Decimal::from_ratio(debt_amount, collateral_amount * exchange_rate);
+            if current_ltv <= target_ltv {
+                return Err(StdError::generic_err(format!(
+                    "Current LTV is already lower than target LTV ({} <= {})",
+                    current_ltv, target_ltv
+                )));
+            }
+            if target_ltv >= Decimal::one() {
+                return Err(StdError::generic_err("Target LTV must be less than 1"));
+            }
+
             let mut remaining_collateral = collateral_amount;
             let mut remaining_debt = debt_amount;
 
             let premium_price = Decimal::from_ratio(95u128, 100u128) * exchange_rate;
 
-            let num_term1 = {
-                let decimals = target_ltv * exchange_rate;
-
-                Decimal::from_ratio(
-                    decimals.numerator() + Uint128::from(1u128),
-                    decimals.denominator(),
-                )
-            } * remaining_collateral;
-            let (numerator, numerator_negative) = if remaining_debt.gt(&num_term1) {
-                (
-                    // using num_term1 here makes a smaller numerator, so just use the normal floored math
-                    remaining_debt - target_ltv * exchange_rate * remaining_collateral
-                        + Uint128::from(1u128),
-                    true,
-                )
-            } else {
-                (num_term1 - remaining_debt + Uint128::from(1u128), false)
-            };
-
-            let (denominator, denominator_negative) =
-                if premium_price.gt(&(target_ltv * exchange_rate)) {
-                    // Want denominator to be smaller than required
-                    let decimals = target_ltv * exchange_rate;
-                    let decimals = Decimal::from_ratio(
-                        decimals.numerator() + Uint128::from(1u128),
-                        decimals.denominator(),
-                    );
-                    (premium_price - decimals, true)
-                } else {
-                    // But here, we want the first mul to be floored so as to make it smaller
-                    (target_ltv * exchange_rate - premium_price, false)
-                };
-            if numerator_negative != denominator_negative {
-                return Err(StdError::generic_err("Cannot liquidate to target LTV: numerator and denominator have different signs"));
-            }
-            let consumed_collateral = numerator * denominator.inv().unwrap() + Uint128::from(1u128);
-            if consumed_collateral.gt(&remaining_collateral) {
+            let cur_collateral_value = remaining_collateral * premium_price;
+            if cur_collateral_value.lt(&remaining_debt) {
                 return Err(StdError::generic_err(format!(
-                    "Cannot liquidate to target LTV: not enough collateral ({} > {})",
-                    consumed_collateral, remaining_collateral
+                    "Insufficient funds to cover debt ({} < {})",
+                    cur_collateral_value, remaining_debt
                 )));
             }
-            remaining_collateral -= consumed_collateral;
-            remaining_debt -= consumed_collateral * premium_price;
+            let (numerator, numerator_negative) = {
+                // Target * price * collateral - debt
+                let lhs = remaining_collateral.mul_ceil(target_ltv * exchange_rate);
+                if lhs.gt(&remaining_debt) {
+                    (lhs - remaining_debt, false)
+                } else {
+                    (remaining_debt - lhs, true)
+                }
+            };
+            let (denominator, denominator_negative) = {
+                // Target * price - premium_price
+                let lhs = target_ltv * exchange_rate;
+                if lhs.gt(&premium_price) {
+                    (lhs - premium_price, false)
+                } else {
+                    (premium_price - lhs, true)
+                }
+            };
+
+            if numerator_negative != denominator_negative {
+                return Err(StdError::generic_err(
+                "Cannot liquidate to target LTV: numerator and denominator have different signs",
+            ));
+            }
+
+            let liquidate_amount = numerator.mul_ceil(denominator.inv().unwrap());
+            remaining_collateral -= liquidate_amount;
+            remaining_debt -= liquidate_amount * premium_price;
+            if remaining_collateral.is_zero() {
+                return Err(StdError::generic_err("Insufficient funds to cover debt"));
+            }
+            let new_ltv = Decimal::from_ratio(remaining_debt, remaining_collateral * exchange_rate);
+            if new_ltv.abs_diff(target_ltv) > Decimal::percent(2) {
+                return Err(StdError::generic_err("Cannot liquidate to target LTV"));
+            }
 
             let repay_amount = debt_amount - remaining_debt;
+            let collateral_amount = collateral_amount - remaining_collateral;
             let fee_amount = repay_amount * LIQUIDATION_FEE.load(deps.storage)?;
             let repay_amount = repay_amount - fee_amount;
             let res = SimulationResponse {
-                collateral_amount: collateral_amount - remaining_collateral,
+                collateral_amount,
                 repay_amount,
             };
             Ok(to_binary(&res)?)
         }
-
         _ => unimplemented!(),
     }
 }
