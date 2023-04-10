@@ -2,8 +2,8 @@
 use cosmwasm_std::entry_point;
 
 use cosmwasm_std::{
-    attr, coins, to_binary, BankMsg, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env, Fraction,
-    MessageInfo, Response, StdError, StdResult, Uint128, WasmMsg,
+    attr, coins, to_binary, BankMsg, Binary, CosmosMsg, Decimal, Deps, DepsMut, Empty, Env,
+    Fraction, MessageInfo, Response, StdError, StdResult, Uint128,
 };
 use cw_storage_plus::Item;
 use kujira::{
@@ -64,11 +64,11 @@ pub fn execute(
                     to_address: sender.to_string(),
                     amount: coins(repay_amount.u128(), repay_denom.to_string()),
                 })),
-                Some(cb) => msgs.push(CosmosMsg::Wasm(WasmMsg::Execute {
-                    contract_addr: sender.to_string(),
-                    funds: coins(repay_amount.u128(), repay_denom.to_string()),
-                    msg: cb.0,
-                })),
+                Some(cb) => msgs.push(cb.to_message(
+                    &sender,
+                    Empty {},
+                    coins(repay_amount.u128(), repay_denom.to_string()),
+                )?),
             }
 
             Ok(Response::default()
