@@ -1,4 +1,4 @@
-use std::convert::TryInto;
+use std::{collections::HashMap, convert::TryInto};
 
 use anyhow::Result as AnyResult;
 use cosmwasm_std::{
@@ -8,21 +8,31 @@ use cosmwasm_std::{
 };
 
 use cw_multi_test::{
-    App, AppResponse, BankKeeper, BankSudo, BasicAppBuilder, CosmosRouter, Module, SudoMsg,
-    WasmKeeper,
+    App, AppResponse, BankKeeper, BankSudo, BasicAppBuilder, CosmosRouter, DistributionKeeper,
+    Module, StakeKeeper, SudoMsg, WasmKeeper,
 };
 
 use kujira::{
     BankQuery, DenomMsg, ExchangeRateResponse, KujiraMsg, KujiraQuery, OracleQuery, SupplyResponse,
 };
 
-pub type CustomApp =
-    App<BankKeeper, MockApi, MockStorage, KujiraModule, WasmKeeper<KujiraMsg, KujiraQuery>>;
+pub type CustomApp = App<
+    BankKeeper,
+    MockApi,
+    MockStorage,
+    KujiraModule,
+    WasmKeeper<KujiraMsg, KujiraQuery>,
+    StakeKeeper,
+    DistributionKeeper,
+>;
 
 pub fn mock_app(balances: Vec<(Addr, Vec<Coin>)>) -> CustomApp {
-    let custom = KujiraModule {
-        oracle_price: Decimal::from_ratio(1425u128, 100u128),
+    let mut custom = KujiraModule {
+        oracle_prices: HashMap::new(),
     };
+    custom.set_oracle_price(Decimal::from_ratio(1425u128, 100u128), "factory/owner/coll");
+    custom.set_oracle_price(Decimal::one(), "factory/contract0/uusk");
+    
     BasicAppBuilder::new_custom()
         .with_custom(custom)
         .build(|router, _, storage| {
@@ -33,12 +43,12 @@ pub fn mock_app(balances: Vec<(Addr, Vec<Coin>)>) -> CustomApp {
 }
 
 pub struct KujiraModule {
-    pub oracle_price: Decimal,
+    pub oracle_prices: HashMap<String, Decimal>,
 }
 
 impl KujiraModule {
-    pub fn set_oracle_price(&mut self, price: Decimal) {
-        self.oracle_price = price;
+    pub fn set_oracle_price(&mut self, price: Decimal, denom: &str) {
+        self.oracle_prices.insert(denom.to_string(), price);
     }
 }
 
@@ -184,8 +194,8 @@ impl Module for KujiraModule {
                 }
             },
             KujiraQuery::Oracle(o) => match o {
-                OracleQuery::ExchangeRate { .. } => Ok(to_binary(&ExchangeRateResponse {
-                    rate: self.oracle_price,
+                OracleQuery::ExchangeRate { denom } => Ok(to_binary(&ExchangeRateResponse {
+                    rate: *self.oracle_prices.get(&denom).unwrap_or(&Decimal::zero()),
                 })?),
             },
         }
