@@ -1,3 +1,8 @@
+# MOVED TO THE [kujira-rs](https://github.com/Team-Kujira/kujira-rs) REPOSITORY
+This crate has been moved to be a subcrate in the kujira-rs repository. Please visit that.
+
+## Original README
+
 Mock test interfaces for [kujira-rs](https://github.com/Team-Kujira/kujira-rs)
 
 Add to dev-dependecies
