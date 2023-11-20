@@ -15,7 +15,7 @@ use kujira::{
     BankQuery, DenomMsg, ExchangeRateResponse, KujiraMsg, KujiraQuery, OracleQuery, SupplyResponse,
 };
 
-use crate::api::MockApiBech32;
+use crate::{address::MockAddressGenerator, api::MockApiBech32};
 
 pub type CustomApp = App<
     BankKeeper,
@@ -37,6 +37,7 @@ pub fn mock_app(balances: Vec<(Addr, Vec<Coin>)>) -> CustomApp {
     BasicAppBuilder::new_custom()
         .with_custom(custom)
         .with_api(MockApiBech32::new("kujira"))
+        .with_wasm(WasmKeeper::default().with_address_generator(MockAddressGenerator))
         .build(|router, _, storage| {
             for (addr, coins) in balances {
                 router.bank.init_balance(storage, &addr, coins).unwrap();
