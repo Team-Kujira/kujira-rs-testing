@@ -4,7 +4,7 @@ use anyhow::Result as AnyResult;
 use cosmwasm_std::{
     attr,
     testing::{MockApi, MockStorage},
-    to_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, Empty, Event, Uint128,
+    to_json_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, Empty, Event, Uint128,
 };
 
 use cw_multi_test::{
@@ -32,7 +32,7 @@ pub fn mock_app(balances: Vec<(Addr, Vec<Coin>)>) -> CustomApp {
     };
     custom.set_oracle_price(Decimal::from_ratio(1425u128, 100u128), "factory/owner/coll");
     custom.set_oracle_price(Decimal::one(), "factory/contract0/uusk");
-    
+
     BasicAppBuilder::new_custom()
         .with_custom(custom)
         .build(|router, _, storage| {
@@ -188,13 +188,13 @@ impl Module for KujiraModule {
                         .map(|bz| u128::from_be_bytes(bz.try_into().unwrap()))
                         .unwrap_or_default();
 
-                    Ok(to_binary(&SupplyResponse {
+                    Ok(to_json_binary(&SupplyResponse {
                         amount: denom.coin(&Uint128::from(supply)),
                     })?)
                 }
             },
             KujiraQuery::Oracle(o) => match o {
-                OracleQuery::ExchangeRate { denom } => Ok(to_binary(&ExchangeRateResponse {
+                OracleQuery::ExchangeRate { denom } => Ok(to_json_binary(&ExchangeRateResponse {
                     rate: *self.oracle_prices.get(&denom).unwrap_or(&Decimal::zero()),
                 })?),
             },
