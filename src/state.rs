@@ -26,9 +26,9 @@ struct StatePagination {
 }
 
 pub fn mock_state<C: CustomQuery + DeserializeOwned>(
-    mut deps: OwnedDeps<MockStorage, MockApi, MockQuerier<C>, C>,
+    deps: &mut OwnedDeps<MockStorage, MockApi, MockQuerier<C>, C>,
     file: &str,
-) -> OwnedDeps<MockStorage, MockApi, MockQuerier<C>, C> {
+) {
     let file = File::open(format!("./src/testing/states/{file}.json")).unwrap();
     let reader = BufReader::new(file);
 
@@ -41,5 +41,4 @@ pub fn mock_state<C: CustomQuery + DeserializeOwned>(
 
         deps.storage.set(&k, &v)
     }
-    deps
 }
