@@ -97,7 +97,7 @@ impl MockApiBech32 {
         let digest = Sha256::digest(input).to_vec();
         match encode(self.prefix, digest.to_base32(), Variant::Bech32) {
             Ok(address) => Addr::unchecked(address),
-            Err(reason) => panic!("Generating address failed with reason: {reason}"),
+            Err(reason) => panic!("Generating address failed with reason: {}", reason),
         }
     }
 }

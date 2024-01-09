@@ -1,11 +1,11 @@
 use std::{fs::File, io::BufReader};
 
 use cosmwasm_std::{
-    testing::{mock_dependencies_with_balances, MockApi, MockQuerier, MockStorage},
-    OwnedDeps, Storage,
+    testing::{MockApi, MockQuerier, MockStorage},
+    CustomQuery, OwnedDeps, Storage,
 };
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 struct StateExport {
@@ -25,9 +25,10 @@ struct StatePagination {
     total: String,
 }
 
-pub fn mock_state(file: &str) -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
-    let mut deps = mock_dependencies_with_balances(&[]);
-
+pub fn mock_state<C: CustomQuery + DeserializeOwned>(
+    mut deps: OwnedDeps<MockStorage, MockApi, MockQuerier<C>, C>,
+    file: &str,
+) -> OwnedDeps<MockStorage, MockApi, MockQuerier<C>, C> {
     let file = File::open(format!("./src/testing/states/{file}.json")).unwrap();
     let reader = BufReader::new(file);
 
